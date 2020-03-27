@@ -95,12 +95,17 @@ userinitialdata = {'weight': weight,
                     'age': age,
                     'gender': gender
                     }
-with open('userinitialdata.json') as data_file:
-    data = json.load(data_file)
-j = json.dumps(userinitialdata)
-with open('userinitialdata.json', 'w') as f:
-    f.write(j)
-    f.close()
+userinitialdata = {'weight': weight,
+                    'height': height,
+                    'age': age,
+                    'gender': gender
+                    }
+with open("data_file.json", "w") as write_file:
+    json.dump(userinitialdata, write_file)
+
+with open("data_file.json", "r") as read_file:
+    data = json.load(read_file)
+
 
 
 
