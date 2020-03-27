@@ -90,11 +90,7 @@ if goals == '3':
         BMR2 += 1000
 print("So, this is the amount of calories you shall take to reach your goal:  " + str(BMR2))
 # userinitialdata
-userinitialdata = {'weight': weight,
-                    'height': height,
-                    'age': age,
-                    'gender': gender
-                    }
+
 userinitialdata = {'weight': weight,
                     'height': height,
                     'age': age,
