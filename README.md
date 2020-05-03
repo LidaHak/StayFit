@@ -6,4 +6,4 @@ At first the user must input his weight, height, age, gender, status of activity
 The app already has stored info about how much calories every food contains and formulas to calculate the needed daily calories and also the calories you burnt during exercising. 
 
 ***
-People who want to use this app shall download the excel file of exercises(in my repository). After downloading you just need to change the file path in the main code and type the path form your device. 
+People who want to use this app shall download the excel file of exercises(in my repository). After downloading you just need to change the file path in the main code and type the path from your device. 
