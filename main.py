@@ -102,7 +102,7 @@ def read_user_data():
 def exit_app(user_initial_data, daily_calories, person_dict):
     user_initial_data["calories"] = daily_calories
     person_dict.append(user_initial_data)
-    with open("daily_calories.json", "a+") as WRITE_FILE:
+    with open("daily_calories.json", "w+") as WRITE_FILE:
         json.dump(person_dict, WRITE_FILE, indent=True)
     exit("Bye")
 
@@ -205,7 +205,7 @@ def main():
     print("""Available Commands: 
                   \r1. Type the food name.
                   \r2. Type "calories" to view your calories.
-                  \r3. Type date(yyyy-ww-dd) to view your calories at particular date.
+                  \r3. Type "date yyyy-ww-dd" to view your calories at particular date.
                   \r4. Type "workout " +  name of the exercise to view your calories burnt during exercising
                   \r5. Type "exit" to exit the app.
                       """)
