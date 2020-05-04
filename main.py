@@ -1,7 +1,10 @@
-import datetime
 import json
+import datetime
 import os
 from usda import UsdaClient
+import difflib
+import pandas as pd
+import xlrd
 
 
 def read_user_data():
@@ -43,10 +46,13 @@ def read_user_data():
         else:
             print("Please, enter correct values!")
     while True:
-        activity_status = input('''Please choose one of the options \r\tEnter '1' if sedentary (little or no 
-        exercise) \r\tEnter '2' if lightly active (light exercise/sports 1-3 days/week) \r\tEnter '3' if moderately 
-        active (moderate exercise/sports 3-5 days/week) \r\tEnter '4' if active (hard exercise/sports 6-7 days a 
-        week) \r\tEnter '5' if extra active (very hard exercise/sports & physical job or 2x training) \r\t> ''')
+        activity_status = input('''Please choose one of the options 
+                                   \r\tEnter '1' if sedentary (little or no exercise) 
+                                   \r\tEnter '2' if lightly active (light exercise/sports 1-3 days/week) 
+                                   \r\tEnter '3' if moderately active (moderate exercise/sports 3-5 days/week) 
+                                   \r\tEnter '4' if active (hard exercise/sports 6-7 days a week) 
+                                   \r\tEnter '5' if extra active (very hard exercise/sports & physical job or 2x training) 
+                                   \r\t> ''')
         if activity_status == "1":
             BMR2 = BMR1 * 1.2
             break
@@ -77,11 +83,7 @@ def read_user_data():
             BMR2 = BMR1
             break
         if goals == '3':
-            amount = input("How much you want to gain during the week? 1 pound(~0,4kg) or 2 pounds(~0,9kg)?")
-            if amount == "1":
-                BMR2 += 500
-            else:
-                BMR2 += 1000
+            BMR2 += 500
             break
         else:
             print("Please, enter correct values!")
@@ -92,30 +94,30 @@ def read_user_data():
         'age': age,
         'gender': gender,
         'calories_limit': BMR2}
-    with open("data_file.json", "w+") as Writefile:
+    with open("user_data.json", "w+") as Writefile:
         json.dump(user_initial_info, Writefile, indent=True)
     return BMR2
 
 
-def exit_app():
+def exit_app(user_initial_data, daily_calories, person_dict):
     user_initial_data["calories"] = daily_calories
     person_dict.append(user_initial_data)
-    with open("daily_calories2.json", "w+") as WRITE_FILE:
+    with open("daily_calories.json", "a+") as WRITE_FILE:
         json.dump(person_dict, WRITE_FILE, indent=True)
     exit("Bye")
 
 
-def print_date_used_calories():
-    user_input_date = text[5:]
+def print_date_used_calories(text, person_dict):
+    seeked_date = text[5:]
     for d in person_dict:
-        if d["date"] == user_input_date:
-            print("In %s you have used %s calories" % (user_input_date, d["calories"]))
+        if d["date"] == seeked_date:
+            print("In %s you have used %s calories" % (seeked_date, d["calories"]))
             break
         else:
             print("There is no data for current date")
 
 
-def find_food(daily_calories_amount):
+def find_food(daily_calories_amount, text, client, calories_limit):
     foods_search = client.search_foods(text, 1)
     food_name = next(foods_search)
     print(food_name)
@@ -134,59 +136,98 @@ def find_food(daily_calories_amount):
     return daily_calories_amount
 
 
-print("Hello, this is the app to calculate your calories ")
-if os.stat("data_file.json").st_size == 0:
-    print("PLease input the following information. ")
-    calories_limit = read_user_data()
-else:
-    with open("data_file.json", "r") as read_file:
-        calories_limit = float(json.loads(read_file.read())["calories_limit"])
+def exercise_calories(daily_calories, text):
+    file_location = r'C:\\Users\\TAKIKIDA\\Downloads\\exercise_database.xlsx'
+    workbook = xlrd.open_workbook(file_location)
+    excel_file = pd.read_excel('C:\\Users\\TAKIKIDA\\Downloads\\exercise_database 2.xlsx')
+    format = ['Exercise Name', 'Calories per minute']
+    df_selected = excel_file[format]
+    exercise_type = text[8:]
+    print(exercise_type)
+    first_list = excel_file['Exercise Name']
+    match_result = difflib.get_close_matches(exercise_type, first_list)
 
-client = UsdaClient('7wAkGt3olo20fa4ylx2hQr1ege8R4hZsGchImWt1')
-foods_list = client.list_foods(1)
-for _ in range(1):
-    food_item = next(foods_list)
-    # print(food_item.name)
-daily_calories = 0
-if os.stat("daily_calories2.json").st_size == 0:
-    with open("daily_calories2.json", "w+") as write_file:
-        json.dump([], write_file)
+    for item in range(len(match_result)):
+        print('For %s type %i' % (match_result[item], item))
+    while True:
+        try:
+            exercise = match_result[int(input())]
+            exercise_time = int(input("Exercise Time in minutes:"))
 
-with open("daily_calories2.json", "r") as read_file:
-    person_dict = json.loads(read_file.read())
+            for el in df_selected.values:
+                if el[0] == exercise:
+                    burnt = float(el[1]) * exercise_time
+                    print('you have burnt %f calories' % burnt)
+                    daily_calories -= burnt
+                    return daily_calories
+        except ValueError:
+            print('Enter correct values')
+            break
 
-with open("daily_calories2.json", "w+") as write_file:
-    json.dump(person_dict, write_file, indent=True)
 
-for i in range(len(person_dict)):
-    if person_dict[i]["date"] == datetime.datetime.today().date().isoformat():
-        daily_calories = float(person_dict[i]["calories"])
-        del person_dict[i]
-        break
+def main():
+    print("Hello, this is the app to calculate your calories ")
+    with open("user_data.json", "a+"):
+        pass
+    if os.stat("user_data.json").st_size == 0:
+        print("PLease input the following information... ")
+        calories_limit = read_user_data()
+    else:
+        with open("user_data.json", "r") as read_file:
+            calories_limit = float(json.loads(read_file.read())["calories_limit"])
 
-user_initial_data = {
-    'date': datetime.datetime.today().date().isoformat(),
-    'calories': daily_calories
-}
+    client = UsdaClient('7wAkGt3olo20fa4ylx2hQr1ege8R4hZsGchImWt1')
+    foods_list = client.list_foods(1)
+    for _ in range(1):
+        food_item = next(foods_list)
+        # print(food_item.name)
+    daily_calories = 0
+    with open("daily_calories.json", "w+"):
+        pass
+    if os.stat("daily_calories.json").st_size == 0:
+        with open("daily_calories.json", "w+") as write_file:
+            json.dump([], write_file)
+    with open("daily_calories.json", "r") as read_file:
+        person_dict = json.loads(read_file.read())
+    with open("daily_calories.json", "w+") as write_file:
+        json.dump(person_dict, write_file, indent=True)
+    for i in range(len(person_dict)):
+        if person_dict[i]["date"] == datetime.datetime.today().date().isoformat():
+            daily_calories = float(person_dict[i]["calories"])
+            del person_dict[i]
+            break
 
-print("Commands 1.food name, 2.calories, 3.date yyyy-MM-dd, 4.exit, 5.Add new food name")
+    user_initial_data = {
+        'date': datetime.datetime.today().date().isoformat(),
+        'calories': daily_calories
+    }
 
-while True:
-    print("Enter command")
-    text = input()
-    if text == "Add new food name":
-        print("ok")
-        continue
-    if text == "exit":
-        exit_app()
-    elif "date" in text:
-        print_date_used_calories()
-        continue
-    elif text == "calories":
-        print("Today you have consumed %i calories" % daily_calories)
-        continue
-    try:
-        daily_calories = find_food(daily_calories)
-    except:
-        print("Food not found, try to write another food name")
-        continue
+    print("""Available Commands: 
+                  \r1. Type the food name.
+                  \r2. Type "calories" to view your calories.
+                  \r3. Type date(yyyy-ww-dd) to view your calories at particular date.
+                  \r4. Type "workout " +  name of the exercise to view your calories burnt during exercising
+                  \r5. Type "exit" to exit the app.
+                      """)
+
+    while True:
+        print("Enter command")
+        text = input(">")
+        if text == "exit":
+            exit_app(user_initial_data, daily_calories, person_dict)
+        elif "date" in text:
+            print_date_used_calories(text, person_dict)
+            continue
+        elif text == "calories":
+            print("Today you have consumed %i calories" % daily_calories)
+            continue
+        elif "workout" in text:
+            daily_calories = exercise_calories(daily_calories, text)
+            continue
+        try:
+            daily_calories = find_food(daily_calories, text, client, calories_limit)
+        except ValueError:
+            print("Food not found, try to write another food name")
+
+
+main()
