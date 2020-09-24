@@ -1,0 +1,21 @@
+book_list = {'Book1': 2004,
+             'Book2': 1994,
+             'Book3': 2013,
+             'Book4': 1889
+             }
+list = list(book_list.values())
+
+def Sort(array):
+    n = len(list)
+    for i in range(n - 1):
+        for j in range(0, n - i - 1):
+            if array[j] > array[j + 1]:
+                array[j], array[j + 1] = array[j + 1], array[j]
+
+
+array = list
+Sort(array)
+
+print("The sorted array of publication dates is:")
+for i in range(len(array)):
+    print("%d" % array[i])
